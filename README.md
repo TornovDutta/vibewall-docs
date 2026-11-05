@@ -1,70 +1,74 @@
-# Getting Started with Create React App
+# VibeWall — Documentation & Architecture Portal
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+> Official documentation, system design specifications, and REST API reference for **[VibeWall](https://vibewall.me/)** — an anonymous confession and feedback platform designed for students.
 
-## Available Scripts
+[![Live App](https://img.shields.io/badge/Live%20Platform-vibewall.me-10B981?style=for-the-badge&logo=vercel&logoColor=white)](https://vibewall.me/)
+[![Backend Repo](https://img.shields.io/badge/GitHub-VibeWall%20Repository-6366F1?style=for-the-badge&logo=github&logoColor=white)](https://github.com/TornovDutta/VibeWall)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![NVIDIA NIM](https://img.shields.io/badge/AI%20Moderation-NVIDIA%20NIM%20(Llama%203.1)-76B900?style=for-the-badge&logo=nvidia&logoColor=white)](https://build.nvidia.com)
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## 🌐 Live Platform
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- **Production Client Website:** [https://vibewall.me/](https://vibewall.me/)
+- **Backend API Base URL:** `http://localhost:8080/api/v3`
+- **Interactive Swagger UI:** `http://localhost:8080/api/v3/swagger-ui.html`
+- **OpenAPI 3 JSON Spec:** `http://localhost:8080/api/v3/api-docs`
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+## 📖 About This Documentation Site
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+This React & Tailwind CSS web portal provides a comprehensive guide to VibeWall's architecture, security blueprint, and REST API contracts:
 
-### `npm run build`
+- **Overview (`/`)**: Core system capabilities, problem-mitigation audit log, interactive security blueprint tabs, and full tech stack.
+- **Setup Guide (`/setup`)**: Step-by-step developer guide with copyable commands, `.env` generation details (`openssl rand -base64 32/48`), and Docker Compose deployment.
+- **API Reference (`/api`)**: Complete interactive catalog of all `/api/v3` endpoints, categorized by module (Authentication, Feed, Confessions, Feedback, Reports, Admin, Health) with request/response schemas.
+- **Privacy & Security FAQ (`/docs`)**: In-depth explanations of application-layer AES-256-GCM encryption, deterministic IVs for DB search, NVIDIA NIM binary classification prompts, and 12-hour MongoDB TTL auto-deletion.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 🛠️ Main Project Architecture Highlights
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+| Layer | Technology | Key Characteristic |
+|---|---|---|
+| **Language** | Java 17 LTS | Clean typed domain models and modern language features |
+| **Framework** | Spring Boot 3.5 | Layered MVC, Spring AOP logging, `@ControllerAdvice` error handling |
+| **Persistence** | MongoDB Atlas | Ephemeral documents with `@Indexed(expireAfter = "PT12H")` TTL |
+| **Cache** | Redis | In-memory key-value cache accelerating `/api/v3/feed/` reads |
+| **Security** | Spring Security + JJWT + BCrypt | Stateless access tokens + 7-day rotating refresh tokens |
+| **Encryption** | AES/GCM/NoPadding (256-bit) | Server-side authenticated encryption at rest for confessions & feedback |
+| **AI Moderation** | NVIDIA NIM (Meta Llama 3.1 8B Instruct) | Synchronous zero-shot safety classifier; rejects toxic input with `422` |
+| **API Docs** | SpringDoc OpenAPI 3 | Swagger UI documentation available at `/api/v3/swagger-ui.html` |
+| **DevOps** | Docker & Docker Compose | Multi-container orchestration linking backend, Redis, and configs |
 
-### `npm run eject`
+---
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## 🚀 Running This Documentation Project Locally
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Prerequisites
+- Node.js 18+
+- npm 9+
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Commands
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```bash
+# 1. Install dependencies
+npm install
 
-## Learn More
+# 2. Run local development server
+npm start
+# Opens at http://localhost:3000
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+# 3. Create production build
+npm run build
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+---
 
-### Code Splitting
+## 👨‍💻 Author
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Designed and developed by **Tornov Dutta**.  
+Repository: [https://github.com/TornovDutta/VibeWall](https://github.com/TornovDutta/VibeWall)  
+Live Platform: [https://vibewall.me/](https://vibewall.me/)

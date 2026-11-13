@@ -113,6 +113,27 @@ const features = [
     badge: 'DEVOPS',
     tag: 'DOCKER',
     highlight: 'Docker Compose Ready'
+  },
+  {
+    title: 'Unified Randomized Live Wall',
+    details: 'A dynamic stream combining Confessions, Polls, and Q&A with Fisher-Yates random sequence shuffling on every page load to keep content fresh.',
+    badge: 'DYNAMIC FEED',
+    tag: 'LIVE WALL',
+    highlight: 'Random Mixed Sequence'
+  },
+  {
+    title: 'Interactive Community Polls',
+    details: 'Launch public opinion polls with 2-6 custom options, dynamic live percentages, category filters, and atomic single-vote enforcement.',
+    badge: 'COMMUNITY ENGAGEMENT',
+    tag: 'LIVE VOTING',
+    highlight: 'Real-Time Sentiment'
+  },
+  {
+    title: 'Anonymous Q&A & User Walls',
+    details: 'Ask questions to the community or target user walls anonymously or with aliases; supports public or private answers with inbox badges.',
+    badge: 'INTERACTIVE Q&A',
+    tag: 'Q&A SYSTEM',
+    highlight: 'Public & Private Walls'
   }
 ]
 

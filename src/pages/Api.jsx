@@ -399,10 +399,284 @@ const apiEndpoints = [
       { code: 200, desc: 'OK - Report status updated' },
       { code: 404, desc: 'Not Found - Report not found' }
     ]
+  },
+
+  // ================= OPINION POLLS =================
+  {
+    group: 'Opinion Polls',
+    method: 'GET',
+    path: '/api/v3/polls',
+    summary: 'Get all active opinion polls',
+    description: 'Retrieves active community opinion polls with real-time voting counts, percentage breakdown, and current user vote state.',
+    auth: 'Public (Optional JWT for user vote status)',
+    responses: [
+      { code: 200, desc: 'OK - List of active opinion polls returned' }
+    ]
+  },
+  {
+    group: 'Opinion Polls',
+    method: 'POST',
+    path: '/api/v3/polls',
+    summary: 'Create a new opinion poll',
+    description: 'Creates a community poll with 2 to 6 options. Content is evaluated by AI safety guardrails before persistence.',
+    auth: 'JWT (User Bearer Token)',
+    body: {
+      question: 'Which framework do you prefer for building full-stack web applications?',
+      options: ['Spring Boot + React', 'Next.js', 'FastAPI + Vue', 'Go + Svelte'],
+      category: 'TECH'
+    },
+    responses: [
+      { code: 201, desc: 'Created - Poll created successfully' },
+      { code: 422, desc: 'Unprocessable Entity - Question flagged by AI safety' }
+    ]
+  },
+  {
+    group: 'Opinion Polls',
+    method: 'GET',
+    path: '/api/v3/polls/{id}',
+    summary: 'Get single opinion poll by ID',
+    description: 'Fetches details of a specific poll, including option vote tallies and expiration timestamp.',
+    auth: 'Public (Optional JWT)',
+    params: {
+      id: 'Poll MongoDB ID'
+    },
+    responses: [
+      { code: 200, desc: 'OK - Poll found' },
+      { code: 404, desc: 'Not Found - Poll does not exist' }
+    ]
+  },
+  {
+    group: 'Opinion Polls',
+    method: 'POST',
+    path: '/api/v3/polls/{id}/vote',
+    summary: 'Cast vote on a poll option',
+    description: 'Records an anonymous vote. Enforces single-vote rule per user and recalculates dynamic percentages.',
+    auth: 'JWT (User Bearer Token)',
+    params: {
+      id: 'Poll MongoDB ID'
+    },
+    body: {
+      optionId: 1
+    },
+    responses: [
+      { code: 200, desc: 'OK - Vote counted and updated statistics returned' },
+      { code: 409, desc: 'Conflict - User already voted on this poll' }
+    ]
+  },
+  {
+    group: 'Opinion Polls',
+    method: 'DELETE',
+    path: '/api/v3/polls/{id}',
+    summary: 'Delete a poll',
+    description: 'Deletes a poll created by the authenticated user or an administrator.',
+    auth: 'JWT (Creator or Admin)',
+    params: {
+      id: 'Poll MongoDB ID'
+    },
+    responses: [
+      { code: 200, desc: 'OK - Poll deleted' },
+      { code: 403, desc: 'Forbidden - Unauthorized to delete this poll' }
+    ]
+  },
+
+  // ================= ANONYMOUS Q&A =================
+  {
+    group: 'Anonymous Q&A',
+    method: 'GET',
+    path: '/api/v3/qa',
+    summary: 'Get all public community Q&A questions',
+    description: 'Retrieves public Q&A questions for the unified live feed and Q&A explore page.',
+    auth: 'Public (No JWT required)',
+    responses: [
+      { code: 200, desc: 'OK - List of public questions returned' }
+    ]
+  },
+  {
+    group: 'Anonymous Q&A',
+    method: 'POST',
+    path: '/api/v3/qa/ask',
+    summary: 'Ask a community question',
+    description: 'Posts a question to the community open feed. Supports 100% anonymous submission or display under an alias.',
+    auth: 'Public / Authenticated (Optional JWT)',
+    body: {
+      content: 'What advice would you give to first-year software engineering students?',
+      anonymous: true,
+      askerName: ''
+    },
+    responses: [
+      { code: 201, desc: 'Created - Question screened by AI and posted' },
+      { code: 422, desc: 'Unprocessable Entity - Question flagged by AI safety' }
+    ]
+  },
+  {
+    group: 'Anonymous Q&A',
+    method: 'POST',
+    path: '/api/v3/qa/ask/{targetUserId}',
+    summary: 'Ask a question to a specific user wall',
+    description: 'Directs a question to a wall owner. Delivers to their private inbox with notification.',
+    auth: 'Public / Authenticated',
+    params: {
+      targetUserId: 'Target user ID'
+    },
+    body: {
+      content: 'How do you prepare for coding interviews?',
+      anonymous: true
+    },
+    responses: [
+      { code: 201, desc: 'Created - Question sent to wall inbox' },
+      { code: 404, desc: 'Not Found - Target user does not exist' }
+    ]
+  },
+  {
+    group: 'Anonymous Q&A',
+    method: 'GET',
+    path: '/api/v3/qa/wall/{targetUserId}',
+    summary: 'Get public answered Q&As on a user wall',
+    description: 'Fetches questions answered publicly by the target user for display on their personal wall (/wall/:userId).',
+    auth: 'Public (No JWT required)',
+    params: {
+      targetUserId: 'Target user ID'
+    },
+    responses: [
+      { code: 200, desc: 'OK - Answered wall Q&As returned' }
+    ]
+  },
+  {
+    group: 'Anonymous Q&A',
+    method: 'GET',
+    path: '/api/v3/qa/inbox',
+    summary: 'Get current user Q&A inbox',
+    description: 'Retrieves questions directed to the authenticated user. Supports filtering by status (PENDING or ANSWERED).',
+    auth: 'JWT (User Bearer Token)',
+    params: {
+      status: 'Optional query param: PENDING | ANSWERED | ALL'
+    },
+    responses: [
+      { code: 200, desc: 'OK - Inbox questions returned' },
+      { code: 401, desc: 'Unauthorized - Missing or invalid token' }
+    ]
+  },
+  {
+    group: 'Anonymous Q&A',
+    method: 'POST',
+    path: '/api/v3/qa/{questionId}/reply',
+    summary: 'Reply to an incoming question',
+    description: 'Answers a question. Can be published publicly on the wall/feed or sent as a private response.',
+    auth: 'JWT (Target User or Community)',
+    params: {
+      questionId: 'Question MongoDB ID'
+    },
+    body: {
+      answer: 'Focus on core data structures and practice problem-solving daily!',
+      isPublic: true
+    },
+    responses: [
+      { code: 200, desc: 'OK - Reply saved and notified to asker' },
+      { code: 403, desc: 'Forbidden - Not authorized to reply' }
+    ]
+  },
+  {
+    group: 'Anonymous Q&A',
+    method: 'DELETE',
+    path: '/api/v3/qa/{questionId}',
+    summary: 'Delete a question',
+    description: 'Deletes a question by owner, recipient, or administrator.',
+    auth: 'JWT (Authorized User or Admin)',
+    params: {
+      questionId: 'Question MongoDB ID'
+    },
+    responses: [
+      { code: 200, desc: 'OK - Question deleted' },
+      { code: 403, desc: 'Forbidden - Unauthorized' }
+    ]
+  },
+  {
+    group: 'Anonymous Q&A',
+    method: 'GET',
+    path: '/api/v3/qa/my-asked',
+    summary: 'Get questions asked by current user',
+    description: 'Fetches list of questions the authenticated user has submitted to others.',
+    auth: 'JWT (User Bearer Token)',
+    responses: [
+      { code: 200, desc: 'OK - Questions asked by user returned' }
+    ]
+  },
+  {
+    group: 'Anonymous Q&A',
+    method: 'GET',
+    path: '/api/v3/qa/pending-count',
+    summary: 'Get count of pending unanswered questions in inbox',
+    description: 'Quick counter for unread / unanswered inbox badges.',
+    auth: 'JWT (User Bearer Token)',
+    responses: [
+      { code: 200, desc: 'OK - { pendingCount: number }' }
+    ]
+  },
+
+  // ================= NOTIFICATIONS =================
+  {
+    group: 'Notifications',
+    method: 'GET',
+    path: '/api/v3/notifications',
+    summary: 'Get user notifications',
+    description: 'Fetches in-app notifications for reactions, comments, feedback, and Q&A updates.',
+    auth: 'JWT (User Bearer Token)',
+    responses: [
+      { code: 200, desc: 'OK - Notification list returned' }
+    ]
+  },
+  {
+    group: 'Notifications',
+    method: 'GET',
+    path: '/api/v3/notifications/unread-count',
+    summary: 'Get unread notification count',
+    description: 'Returns badge count of unread notifications for navbar bell icon.',
+    auth: 'JWT (User Bearer Token)',
+    responses: [
+      { code: 200, desc: 'OK - { count: number }' }
+    ]
+  },
+  {
+    group: 'Notifications',
+    method: 'PUT',
+    path: '/api/v3/notifications/{id}/read',
+    summary: 'Mark single notification as read',
+    description: 'Updates notification state to read.',
+    auth: 'JWT (User Bearer Token)',
+    params: {
+      id: 'Notification ID'
+    },
+    responses: [
+      { code: 200, desc: 'OK - Notification marked as read' }
+    ]
+  },
+  {
+    group: 'Notifications',
+    method: 'PUT',
+    path: '/api/v3/notifications/read-all',
+    summary: 'Mark all notifications as read',
+    description: 'Clears all unread notifications for the authenticated user.',
+    auth: 'JWT (User Bearer Token)',
+    responses: [
+      { code: 200, desc: 'OK - All marked as read' }
+    ]
   }
 ]
 
-const categories = ['All', 'Authentication', 'Feed', 'Confessions', 'Feedback', 'Reports', 'User Account', 'Admin', 'Health']
+const categories = [
+  'All',
+  'Authentication',
+  'Feed',
+  'Opinion Polls',
+  'Anonymous Q&A',
+  'Notifications',
+  'Confessions',
+  'Feedback',
+  'Reports',
+  'User Account',
+  'Admin',
+  'Health'
+]
 
 function Api() {
   const [selectedCategory, setSelectedCategory] = useState('All')

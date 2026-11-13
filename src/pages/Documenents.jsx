@@ -8,19 +8,49 @@ const faqs = [
     a: 'Traditional social platforms retain sensitive, vulnerable emotional posts indefinitely across database backups, search logs, and profiling graphs. This creates extreme exposure during data breaches or unauthorized access. VibeWall is architected around data minimization: confessions are anonymized, encrypted at rest, moderated in real time by AI, and automatically purged after 12 hours via MongoDB TTL indexes.'
   },
   {
+    category: 'Feed & Dynamic Shuffling',
+    q: 'How does the unified mixed feed work, and why does the sequence change on every load?',
+    a: 'The VibeWall Live Wall combines three distinct content types: anonymous Confessions, interactive Opinion Polls, and community Q&As. To prevent predictable positioning, echo chambers, and biases, the client applies a Fisher-Yates (Knuth) random shuffle algorithm to the combined item stream on every page load or manual refresh. This ensures an engaging, unpredictable discovery experience every time a user visits or taps Reshuffle.'
+  },
+  {
+    category: 'Anonymous Q&A',
+    q: 'How does the Anonymous Q&A system work between users and the community?',
+    a: 'Users can ask questions in two modes: (1) Community Questions open to everyone on the platform, and (2) Directed Wall Questions addressed to a specific user wall. Questions can be asked 100% anonymously or under a deterministic alias. The wall owner (or any user in the case of community questions) can reply either publicly to showcase the exchange on the Live Wall or privately for personal advice.'
+  },
+  {
+    category: 'Anonymous Q&A',
+    q: 'How do other users see questions on their dashboards and feeds?',
+    a: 'Public questions are surfaced globally on the Live Wall, the dedicated Community Q&A explore page (/qa), and user dashboards under the "My Q&A" tab. Directed questions land in the targeted user\'s Pending Inbox with instant notification badges. Once answered publicly, questions become part of the randomized feed and the owner\'s public wall (/wall/:userId).'
+  },
+  {
+    category: 'Opinion Polls',
+    q: 'How do opinion polls enforce one vote per user while maintaining anonymity?',
+    a: 'Polls support 2 to 6 custom options with live vote counters and dynamic percentages. When an authenticated user votes, their vote is tied to an indexed voter set in the Poll document to prevent double-voting. The voting action is recorded atomically ($inc and $addToSet in MongoDB) so individual vote choices remain decoupled from public profiles.'
+  },
+  {
+    category: 'Opinion Polls',
+    q: 'How are poll lifecycles and expirations managed?',
+    a: 'Polls can be created with 24-hour, 3-day, or 7-day lifecycles. Once a poll expires or is closed by its creator, voting is locked and final percentage distributions remain viewable as an archived community poll.'
+  },
+  {
+    category: 'Notifications',
+    q: 'How does the real-time notification system alert users of activity?',
+    a: 'VibeWall features a lightweight in-app notification center that alerts users when their confessions receive feedback or reactions, when incoming questions arrive in their Q&A inbox, and when their asked questions are answered. An unread counter on the navigation bar keeps users updated without noisy email spam.'
+  },
+  {
     category: 'Privacy',
     q: 'Why is anonymity critical for student emotional expression?',
     a: 'Anonymity eliminates fear of social judgment, peer harassment, academic profiling, and lingering digital footprints. It empowers students to seek advice and share vulnerability authentically without tying confessions to permanent public records.'
   },
   {
     category: 'AI Moderation',
-    q: 'Why did you choose NVIDIA NIM with Meta Llama 3.1 8B Instruct?',
-    a: 'NVIDIA NIM provides ultra-low-latency containerized inference for Meta Llama 3.1 8B Instruct. It processes each submission in real time using a specialized few-shot prompt that classifies content with a strict binary response (1 for block, 0 for allow). Toxic posts, threats, hate speech, and harassment are stopped before they ever hit the database, returning a 422 Unprocessable Entity error.'
+    q: 'Why did you choose an LLM for content moderation across Confessions, Polls, and Q&A?',
+    a: 'VibeWall uses an LLM inference pipeline (Meta Llama 3.1 / Qwen 2.5 via high-throughput inference APIs) to evaluate confessions, replies, poll questions, and Q&A submissions. Synchronous zero-shot and few-shot safety prompts classify input with strict binary outputs. Toxic posts, harassment, hate speech, and self-harm content are blocked before reaching the database, returning a 422 Unprocessable Entity error.'
   },
   {
     category: 'AI Moderation',
     q: 'What happens if the AI moderation service is down or unreachable?',
-    a: 'The system embraces fail-safe security. If the NVIDIA NIM API returns an error or fails to respond, the backend throws an AiUnavailableException, returning HTTP 500. Unverified content is never saved to the database in a compromised state.'
+    a: 'The system embraces fail-safe security. If the moderation inference API fails to respond or returns an error, the backend throws an AiUnavailableException, returning HTTP 500. Unscreened or unverified content is never saved to the database in an unmoderated state.'
   },
   {
     category: 'Cryptography',
@@ -39,13 +69,13 @@ const faqs = [
   },
   {
     category: 'Data Retention',
-    q: 'Why is the automatic deletion TTL window set to 12 hours?',
+    q: 'Why is the automatic deletion TTL window set to 12 hours for confessions?',
     a: 'Twelve hours matches typical student attention spans, giving sufficient time for peers to read, empathize, and reply with feedback while drastically shrinking the attack surface. Any compromised snapshot older than 12 hours holds zero confession data.'
   },
   {
     category: 'Database',
     q: 'Why choose MongoDB Atlas over relational databases like PostgreSQL?',
-    a: 'MongoDB Atlas is ideally suited for ephemeral, document-oriented confession models with embedded feedback arrays. Most importantly, MongoDB provides native background TTL indexes (@Indexed(expireAfter = "PT12H")), which eliminate the need for cron-based cleanup jobs and heavy table locks.'
+    a: 'MongoDB Atlas is ideally suited for ephemeral, document-oriented confession models with embedded feedback arrays, poll option aggregates, and Q&A threads. Most importantly, MongoDB provides native background TTL indexes (@Indexed(expireAfter = "PT12H")), which eliminate the need for cron-based cleanup jobs and heavy table locks.'
   },
   {
     category: 'Caching',
@@ -60,7 +90,7 @@ const faqs = [
   {
     category: 'Access Control',
     q: 'How is Role-Based Access Control (RBAC) enforced in Spring Security?',
-    a: 'VibeWall enforces three distinct security scopes: Public routes (/auth/**, /feed/**, /health), Authenticated User routes (/users/**), and Administrator routes (/admin/**). Role claims are embedded in the signed JWT and verified by JwtAuthFilter before requests reach controller methods.'
+    a: 'VibeWall enforces three distinct security scopes: Public routes (/auth/**, /feed/**, /polls, /qa, /health), Authenticated User routes (/users/**, /qa/inbox, /polls/*/vote), and Administrator routes (/admin/**). Role claims are embedded in the signed JWT and verified by JwtAuthFilter before requests reach controller methods.'
   },
   {
     category: 'Architecture',
@@ -84,7 +114,20 @@ function Documents() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCat, setSelectedCat] = useState('All')
 
-  const categories = ['All', 'System Design', 'AI Moderation', 'Cryptography', 'Data Retention', 'Authentication', 'Database', 'Production']
+  const categories = [
+    'All',
+    'System Design',
+    'Feed & Dynamic Shuffling',
+    'Anonymous Q&A',
+    'Opinion Polls',
+    'Notifications',
+    'AI Moderation',
+    'Cryptography',
+    'Data Retention',
+    'Authentication',
+    'Database',
+    'Production'
+  ]
 
   const filteredFaqs = faqs.filter((item) => {
     const matchCat = selectedCat === 'All' || item.category === selectedCat
@@ -103,16 +146,16 @@ function Documents() {
         <div className="flex flex-wrap items-center gap-2">
           <span className="kicker text-indigo-400">Architecture FAQ</span>
           <span className="text-slate-600">•</span>
-          <span className="text-xs text-slate-400 font-mono">Design Decisions &amp; Security Principles</span>
+          <span className="text-xs text-slate-400 font-mono">Design Decisions &amp; Engineering Principles</span>
         </div>
 
         <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-50 tracking-tight">
-          Privacy, Cryptography &amp; Moderation FAQ
+          System Architecture, Q&amp;A, Polls &amp; Security FAQ
         </h1>
 
         <p className="text-slate-300 max-w-3xl text-sm sm:text-base leading-relaxed">
-          Comprehensive explanations of the engineering choices behind VibeWall: application-layer AES-256-GCM encryption,
-          real-time NVIDIA NIM AI moderation, MongoDB TTL indexes, and stateless JWT token rotation.
+          Comprehensive explanations of the engineering choices behind VibeWall: unified randomized live feeds,
+          anonymous Q&amp;A walls, opinion polls, real-time AI moderation, AES-256-GCM encryption, and stateless token rotation.
         </p>
 
         <div className="flex items-center gap-4 pt-1">
@@ -224,8 +267,8 @@ function Documents() {
                   <span>Key Architectural Takeaway</span>
                 </div>
                 <p className="text-xs text-slate-400 leading-relaxed font-mono">
-                  By pairing real-time NVIDIA NIM AI moderation with application-layer AES-256-GCM encryption and 12-hour automated eviction,
-                  VibeWall reduces privacy liability and data breach impact to the mathematical minimum.
+                  By unifying Confessions, Opinion Polls, and Anonymous Q&amp;A into a randomly shuffled live stream with real-time AI safety screening,
+                  VibeWall offers dynamic social engagement with zero privacy leakage and minimal data retention liability.
                 </p>
               </div>
             </>

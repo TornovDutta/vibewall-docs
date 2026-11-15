@@ -43,6 +43,36 @@ const faqs = [
     a: 'Anonymity eliminates fear of social judgment, peer harassment, academic profiling, and lingering digital footprints. It empowers students to seek advice and share vulnerability authentically without tying confessions to permanent public records.'
   },
   {
+    category: 'Reputation & Moderation',
+    q: 'How does the AI Intent Layer distinguish emotional vulnerability and venting from hate speech?',
+    a: 'VibeWall uses an intent-aware moderation prompt on LLM inference pipelines. The prompt instructs the model to carefully analyze user intent: students must feel free to express sadness, heartbreak, academic burnout, loneliness, and emotional vulnerability. However, messages containing malicious intent—such as targeted insults, racial slurs, harassment, bullying, or threats directed at others—are strictly classified as UNSAFE. This ensures a compassionate, supportive atmosphere while eliminating harassment.'
+  },
+  {
+    category: 'Reputation & Moderation',
+    q: 'How does the Community Reputation Point System work, and how are points awarded or penalized?',
+    a: 'Every user starts with a baseline of 100 reputation points upon registration. Whenever community members like or react positively to a user\'s confession or feedback comment, that author is rewarded with +5 reputation points. Conversely, whenever the AI Intent Layer blocks an attempt to post hateful, insulting, or abusive content, the user is penalized with an automatic deduction of -25 points. This gamifies constructive community participation.'
+  },
+  {
+    category: 'Reputation & Moderation',
+    q: 'What happens when a user\'s reputation points drop below zero, and how is the automatic ban enforced?',
+    a: 'If a user repeatedly attempts to post hateful content and their reputation points drop below zero (points < 0), the ReputationService automatically marks their account as banned (banned = true), timestamps the action, records the ban reason, and logs a CRITICAL system event. Banned users are completely locked out from posting confessions, submitting comments, asking questions, and voting in polls.'
+  },
+  {
+    category: 'Reputation & Moderation',
+    q: 'Why can only an administrator unban accounts from the Admin Panel?',
+    a: 'To maintain community safety and accountability, suspended accounts cannot automatically recover or regain posting privileges on their own. Only platform administrators can inspect banned accounts in the Admin Panel (/admin under "Users & Bans"), review incident logs, and perform an administrative unban. Unbanning restores the user\'s reputation to 100 points, clearing the suspension.'
+  },
+  {
+    category: 'User Profile',
+    q: 'What is the User Profile page (/profile) and how does it visualize user standing and reputation tiers?',
+    a: 'The User Profile page displays the user\'s deterministic anonymous persona (e.g. @Neon Panda), masked account ID, and a live Reputation Health Gauge. The gauge maps points to four tiers: Trusted Vibester (100+ pts), Good Standing (50–99 pts), Caution: Points Low (1–49 pts), and Account Suspended (< 0 pts). Users can also review reputation guidelines, update their username or password, and manage account deletion.'
+  },
+  {
+    category: 'Threaded Responses',
+    q: 'How does the redesigned comment and reply system support community discussions and reactions?',
+    a: 'Confession feedback features a modern threaded response layout with curved connector lines, unique anonymous gradient avatars for every commenter, and formatted @mention tags. Members can click "Reply" on any comment to target a specific user, use quick supportive sentiment chips (e.g. 💜 You\'re not alone, 🫂 Sending hugs), and like responses to award +5 points to the comment author.'
+  },
+  {
     category: 'AI Moderation',
     q: 'Why did you choose an LLM for content moderation across Confessions, Polls, and Q&A?',
     a: 'VibeWall uses an LLM inference pipeline (Meta Llama 3.1 / Qwen 2.5 via high-throughput inference APIs) to evaluate confessions, replies, poll questions, and Q&A submissions. Synchronous zero-shot and few-shot safety prompts classify input with strict binary outputs. Toxic posts, harassment, hate speech, and self-harm content are blocked before reaching the database, returning a 422 Unprocessable Entity error.'
@@ -98,6 +128,16 @@ const faqs = [
     a: 'Spring Aspect-Oriented Programming separates cross-cutting concerns from business logic. LoggingAspect traces execution times and parameters across controllers, while ReportAspect intercepts content flagging events for moderation analytics without polluting domain services.'
   },
   {
+    category: 'Admin & Diagnostics',
+    q: 'How does the Admin Dashboard monitor and capture runtime errors experienced by users?',
+    a: 'VibeWall incorporates an automated, two-layer error monitoring pipeline. On the backend, GenericException (@RestControllerAdvice) intercepts all 4xx, 5xx, and unhandled exceptions, automatically recording the endpoint, HTTP status code, user alias, error message, and diagnostic stack trace into MongoDB with a 7-day TTL. On the frontend, Axios interceptors detect unhandled network disconnects or 5xx responses and transmit client error telemetry to POST /api/v3/admin/logs/client. Administrators inspect this unified stream in real time with search, HTTP status code filtering, and stack trace inspection.'
+  },
+  {
+    category: 'Admin & Diagnostics',
+    q: 'How does the system detect and display AI outages, latency degradation, and fallback states?',
+    a: 'The HuggingFaceAiServiceImpl monitors live health telemetry across every inference call. It records operational status (HEALTHY, DEGRADED, OFFLINE, UNCONFIGURED), tracks round-trip ping latency in milliseconds, logs provider errors, and flags whether heuristic fallback moderation is active. Administrators can view a live AI Health status banner on the overview page, inspect full diagnostics in the dedicated AI panel, and run on-demand 5-token ping tests via POST /api/v3/admin/ai-test.'
+  },
+  {
     category: 'Deployment',
     q: 'How does Docker Compose simplify local development and production deployment?',
     a: 'Docker Compose orchestrates the Spring Boot 3.5 application container and the Redis container within an isolated network. Environment variables from .env configure database URIs, API keys, and CORS settings without modifying source code.'
@@ -116,6 +156,10 @@ function Documents() {
 
   const categories = [
     'All',
+    'Reputation & Moderation',
+    'User Profile',
+    'Threaded Responses',
+    'Admin & Diagnostics',
     'System Design',
     'Feed & Dynamic Shuffling',
     'Anonymous Q&A',

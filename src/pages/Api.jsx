@@ -227,6 +227,22 @@ const apiEndpoints = [
       { code: 404, desc: 'Not Found - Feedback or confession not found' }
     ]
   },
+  {
+    group: 'Feedback',
+    method: 'POST',
+    path: '/api/v3/users/feedback/{confessionId}/{feedbackId}/like',
+    summary: 'Like or unlike a feedback comment',
+    description: 'Toggles a like on the feedback comment and dynamically increases (+5) or decreases (-5) the comment author\'s reputation points.',
+    auth: 'JWT (User Bearer Token)',
+    params: {
+      confessionId: 'Confession hex ID',
+      feedbackId: 'Feedback sequence number (integer)'
+    },
+    responses: [
+      { code: 200, desc: 'OK - Like recorded and reputation updated' },
+      { code: 404, desc: 'Not Found - Feedback or confession not found' }
+    ]
+  },
 
   // ================= REPORTS =================
   {
@@ -292,6 +308,26 @@ const apiEndpoints = [
   // ================= USER ACCOUNT =================
   {
     group: 'User Account',
+    method: 'GET',
+    path: '/api/v3/users/me',
+    summary: 'Get user profile & reputation points',
+    description: 'Retrieves authenticated user details including current reputation score, standing tier, ban status, and role.',
+    auth: 'JWT (User Bearer Token)',
+    responseExample: {
+      id: '66ef892a014a5b6c',
+      name: 'student_user',
+      role: 'USER',
+      points: 100,
+      banned: false,
+      banReason: null
+    },
+    responses: [
+      { code: 200, desc: 'OK - Profile and reputation details returned' },
+      { code: 401, desc: 'Unauthorized - Missing or expired JWT' }
+    ]
+  },
+  {
+    group: 'User Account',
     method: 'PUT',
     path: '/api/v3/users/me',
     summary: 'Update user profile',
@@ -329,6 +365,57 @@ const apiEndpoints = [
     responses: [
       { code: 200, desc: 'OK - List of UserResponse objects' },
       { code: 403, desc: 'Forbidden - Insufficient role privileges' }
+    ]
+  },
+  {
+    group: 'Admin',
+    method: 'POST',
+    path: '/api/v3/admin/users/{userId}/unban',
+    summary: 'Unban suspended user account',
+    description: 'Restores user account posting privileges and resets their reputation points (default: 100).',
+    auth: 'Admin JWT (Role: ADMIN)',
+    params: {
+      userId: 'User target hex ID',
+      restorePoints: 'Optional points amount to grant upon unbanning (default: 100)'
+    },
+    responses: [
+      { code: 200, desc: 'OK - User unbanned and points restored' },
+      { code: 404, desc: 'Not Found - User not found' },
+      { code: 403, desc: 'Forbidden - Admin role required' }
+    ]
+  },
+  {
+    group: 'Admin',
+    method: 'POST',
+    path: '/api/v3/admin/users/{userId}/ban',
+    summary: 'Manually ban a user account',
+    description: 'Suspends user from posting, commenting, or polling with an administrative reason.',
+    auth: 'Admin JWT (Role: ADMIN)',
+    params: {
+      userId: 'User target hex ID',
+      reason: 'Administrative justification for suspension'
+    },
+    responses: [
+      { code: 200, desc: 'OK - User account marked as banned' },
+      { code: 404, desc: 'Not Found - User not found' },
+      { code: 403, desc: 'Forbidden - Admin role required' }
+    ]
+  },
+  {
+    group: 'Admin',
+    method: 'PUT',
+    path: '/api/v3/admin/users/{userId}/points',
+    summary: 'Manually adjust user reputation points',
+    description: 'Sets user reputation points to a specific integer value. If points become negative, auto-ban triggers.',
+    auth: 'Admin JWT (Role: ADMIN)',
+    params: {
+      userId: 'User target hex ID',
+      points: 'New integer reputation score'
+    },
+    responses: [
+      { code: 200, desc: 'OK - Points adjusted successfully' },
+      { code: 404, desc: 'Not Found - User not found' },
+      { code: 403, desc: 'Forbidden - Admin role required' }
     ]
   },
   {
@@ -398,6 +485,98 @@ const apiEndpoints = [
     responses: [
       { code: 200, desc: 'OK - Report status updated' },
       { code: 404, desc: 'Not Found - Report not found' }
+    ]
+  },
+  {
+    group: 'Admin',
+    method: 'GET',
+    path: '/api/v3/admin/logs',
+    summary: 'Get system and user runtime error logs',
+    description: 'Fetches recent runtime error logs (up to 100 entries) recorded automatically by global exception interceptors and client error telemetry.',
+    auth: 'Admin JWT (Role: ADMIN)',
+    responseExample: [
+      {
+        id: '67389a01b5c2d3e4',
+        level: 'ERROR',
+        source: 'BACKEND',
+        endpoint: 'POST /api/v3/confession',
+        statusCode: 422,
+        userId: '66ef771b99a03',
+        userAlias: 'Neon Dolphin',
+        message: 'Content moderation violation: toxic content detected',
+        details: 'org.example.vibewall.exception.GenericException...',
+        timestamp: '2026-11-15T00:20:10.000Z'
+      }
+    ],
+    responses: [
+      { code: 200, desc: 'OK - List of system error logs returned' },
+      { code: 403, desc: 'Forbidden - Requires administrator privileges' }
+    ]
+  },
+  {
+    group: 'Admin',
+    method: 'DELETE',
+    path: '/api/v3/admin/logs',
+    summary: 'Clear all system error logs',
+    description: 'Purges all stored runtime and user error logs from the database.',
+    auth: 'Admin JWT (Role: ADMIN)',
+    responses: [
+      { code: 204, desc: 'No Content - All logs cleared successfully' },
+      { code: 403, desc: 'Forbidden - Requires administrator privileges' }
+    ]
+  },
+  {
+    group: 'Admin',
+    method: 'POST',
+    path: '/api/v3/admin/logs/client',
+    summary: 'Submit client-side error telemetry',
+    description: 'Public endpoint allowing the frontend to report uncaught JavaScript errors or network failures directly into the Admin error feed.',
+    auth: 'Public (Optional authentication context)',
+    body: {
+      endpoint: '/wall/66ef771b99a03',
+      statusCode: 500,
+      message: 'Network failure: unable to connect to server',
+      details: 'UserAgent: Mozilla/5.0... Navigator error trace'
+    },
+    responses: [
+      { code: 200, desc: 'OK - Client error logged' },
+      { code: 400, desc: 'Bad Request - Validation error' }
+    ]
+  },
+  {
+    group: 'Admin',
+    method: 'GET',
+    path: '/api/v3/admin/ai-status',
+    summary: 'Get AI engine health and diagnostics',
+    description: 'Returns real-time telemetry on the active AI provider, model, latency, last error, and whether fallback heuristics are currently engaged.',
+    auth: 'Admin JWT (Role: ADMIN)',
+    responseExample: {
+      status: 'HEALTHY',
+      provider: 'Groq',
+      model: 'llama-3.3-70b-versatile',
+      endpoint: 'https://api.groq.com/openai/v1/chat/completions',
+      latencyMs: 124,
+      lastChecked: '2026-11-15T00:25:00.000Z',
+      lastError: null,
+      activeFallback: false,
+      message: 'AI Provider Groq is operational and responsive.'
+    },
+    responses: [
+      { code: 200, desc: 'OK - Real-time AI status telemetry' },
+      { code: 403, desc: 'Forbidden - Requires administrator privileges' }
+    ]
+  },
+  {
+    group: 'Admin',
+    method: 'POST',
+    path: '/api/v3/admin/ai-test',
+    summary: 'Trigger live connectivity ping test for AI provider',
+    description: 'Sends a lightweight 5-token ping test to the configured AI provider to measure round-trip latency and confirm operational status on demand.',
+    auth: 'Admin JWT (Role: ADMIN)',
+    responses: [
+      { code: 200, desc: 'OK - Ping test completed successfully' },
+      { code: 503, desc: 'Service Unavailable - AI provider failed connection test' },
+      { code: 403, desc: 'Forbidden - Requires administrator privileges' }
     ]
   },
 

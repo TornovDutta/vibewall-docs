@@ -22,7 +22,7 @@
 
 This React & Tailwind CSS web portal provides a comprehensive guide to VibeWall's architecture, security blueprint, and REST API contracts:
 
-- **Overview (`/`)**: Core system capabilities, problem-mitigation audit log, interactive security blueprint tabs, and full tech stack. Includes coverage of Anonymous Confessions, Interactive Opinion Polls, Anonymous Q&A Walls, and the Unified Randomized Live Wall.
+- **Overview (`/`)**: Core system capabilities, problem-mitigation audit log, interactive security blueprint tabs, and full tech stack. Includes coverage of Anonymous Confessions, Interactive Opinion Polls, Anonymous Q&A Walls, Community Reputation Point System, and the Unified Randomized Live Wall.
 - **Setup Guide (`/setup`)**: Step-by-step developer guide with copyable commands, `.env` generation details (`openssl rand -base64 32/48`), and Docker Compose deployment.
 - **API Reference (`/api`)**: Complete interactive catalog of all `/api/v3` endpoints, categorized by module:
   - **Authentication** (`/auth/**`)
@@ -30,11 +30,13 @@ This React & Tailwind CSS web portal provides a comprehensive guide to VibeWall'
   - **Interactive Opinion Polls** (`/polls/**`)
   - **Anonymous Q&A** (`/qa/**`)
   - **Notifications** (`/notifications/**`)
+  - **User Profile & Standing** (`/users/me`)
   - **Confessions** (`/users/confession/**`)
-  - **Feedback & Reactions** (`/feedback/**`, `/vibes/**`)
-  - **Reports & Admin Governance** (`/reports/**`, `/admin/**`)
-  - **Health & Crisis Support** (`/health`, `/support/**`)
-- **Privacy & Security FAQ (`/docs`)**: In-depth explanations of application-layer AES-256-GCM encryption, deterministic IVs for DB search, LLM safety binary classification prompts, 12-hour MongoDB TTL auto-deletion, and dynamic Fisher-Yates feed shuffling.
+  - **Threaded Comments & Likes** (`/users/feedback/**`, `/feedback/**`)
+  - **Vibe Reactions** (`/vibes/**`)
+  - **Reports & Admin Governance** (`/reports/**`, `/admin/**`, `/admin/users/**`)
+  - **Health & Diagnostics** (`/admin/logs/**`, `/admin/ai-status`, `/health`)
+- **Architecture, Reputation & Security FAQ (`/docs`)**: In-depth explanations of AI intent moderation (protecting emotional vulnerability while blocking hate speech), the community reputation point system (+5 / -25 pts, auto-ban at < 0), application-layer AES-256-GCM encryption, deterministic IVs for DB search, 12-hour MongoDB TTL auto-deletion, and dynamic Fisher-Yates feed shuffling.
 
 ---
 
